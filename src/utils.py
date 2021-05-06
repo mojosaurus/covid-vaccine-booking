@@ -2,6 +2,8 @@ from hashlib import sha256
 from inputimeout import inputimeout, TimeoutOccurred
 import tabulate, copy, time, datetime, requests, sys, os
 
+from user_agents import an_agent
+
 BOOKING_URL = "https://cdn-api.co-vin.in/api/v2/appointment/schedule"
 BENEFICIARIES_URL = "https://cdn-api.co-vin.in/api/v2/appointment/beneficiaries"
 CALENDAR_URL_DISTRICT = "https://cdn-api.co-vin.in/api/v2/appointment/sessions/calendarByDistrict?district_id={0}&date={1}"
@@ -82,6 +84,7 @@ def check_calendar_by_district(request_header, vaccine_type, location_dtls, mini
 
         options = []
         for location in location_dtls:
+            request_header["User-Agent"] = an_agent()
             resp = requests.get(base_url.format(location['district_id'], tomorrow), headers=request_header)
 
             if resp.status_code == 401:
@@ -162,7 +165,7 @@ def book_appointment(request_header, details):
     """
     try:
         print('================================= ATTEMPTING BOOKING ==================================================')
-
+        request_header["User-Agent"] = an_agent()
         resp = requests.post(BOOKING_URL, headers=request_header, json=details)
         print(f'Booking Response Code: {resp.status_code}')
         print(f'Booking Response : {resp.text}')
@@ -292,6 +295,7 @@ def get_districts(request_header):
         2. Lists all districts in that state, prompts to select required ones, and
         3. Returns the list of districts as list(dict)
     """
+    request_header["User-Agent"] = an_agent()
     states = requests.get('https://cdn-api.co-vin.in/api/v2/admin/location/states', headers=request_header)
 
     if states.status_code == 200:
@@ -314,6 +318,7 @@ def get_districts(request_header):
         os.system("pause")
         sys.exit(1)
 
+    request_header["User-Agent"] = an_agent()
     districts = requests.get(f'https://cdn-api.co-vin.in/api/v2/admin/location/districts/{state_id}', headers=request_header)
     if districts.status_code == 200:
         districts = districts.json()['districts']
@@ -351,6 +356,7 @@ def get_beneficiaries(request_header):
         2. Prompts user to select the applicable beneficiaries, and
         3. Returns the list of beneficiaries as list(dict)
     """
+    request_header["User-Agent"] = an_agent()
     beneficiaries = requests.get(BENEFICIARIES_URL, headers=request_header)
 
     if beneficiaries.status_code == 200:
@@ -414,6 +420,8 @@ def generate_token_OTP(mobile, request_header):
     """
     This function generate OTP and returns a new token
     """
+    headers = {"User-Agent":an_agent()}
+    print(headers)
     data = {"mobile": mobile,
             "secret": "U2FsdGVkX1+b2/jGHLoV5kD4lpHdQ/CI7p3TnigA+6ukck6gSGrAR9aAuWeN/Nod9RrY4RaREfPITQfnqgCI6Q=="}
     print(f"Requesting OTP with mobile number {mobile}..")
@@ -430,6 +438,7 @@ def generate_token_OTP(mobile, request_header):
     data = {"otp": sha256(str(OTP).encode('utf-8')).hexdigest(), "txnId": txnId}
     print(f"Validating OTP..")
 
+    request_header["User-Agent"] = an_agent()
     token = requests.post(url='https://cdn-api.co-vin.in/api/v2/auth/validateMobileOtp', json=data, headers=request_header)
     if token.status_code == 200:
         token = token.json()['token']

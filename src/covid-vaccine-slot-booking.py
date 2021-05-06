@@ -3,7 +3,7 @@ from collections import Counter
 import requests, sys, argparse, os
 from utils import generate_token_OTP, get_beneficiaries, check_and_book, get_districts, get_pincodes, beep, \
     BENEFICIARIES_URL, WARNING_BEEP_DURATION
-
+from user_agents import an_agent
 
 def main():
     parser = argparse.ArgumentParser()
@@ -84,6 +84,7 @@ def main():
                                          auto_book=auto_book)
 
             # check if token is still valid
+            # request_header["User-Agent"] = an_agent()
             beneficiaries_list = requests.get(BENEFICIARIES_URL, headers=request_header)
             if beneficiaries_list.status_code == 200:
                 token_valid = True
